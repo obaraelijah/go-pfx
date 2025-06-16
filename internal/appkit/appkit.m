@@ -11,18 +11,8 @@
 
     pfx_ak_init_callback();
 }
-@end
 
-@interface PfxWindow : NSWindow {}
-@end
-
-@implementation PfxWindow
-- (BOOL)canBecomeKeyWindow {
-    return YES;
-}
-
-- (BOOL)canBecomeMainWindow {
-    return YES;
+- (void)stubThread:(id)sender {
 }
 @end
 
@@ -37,6 +27,12 @@ int pfx_ak_run() {
         [NSApplication sharedApplication];
 
         appDelegate = [[PfxApplicationDelegate alloc] init];
+
+        // Ensure we are in multi-threading mode
+        [NSThread detachNewThreadSelector:@selector(stubThread:)
+                                 toTarget:appDelegate
+                               withObject:nil];
+
         [NSApp setDelegate:appDelegate];
 
         [NSApp run];
@@ -45,33 +41,104 @@ int pfx_ak_run() {
     }
 }
 
-PfxWindow *window;
+@class PfxWindow;
 
-int pfx_ak_new_window(int width, int height) {
+@interface PfxWindowContext : NSObject {
+@public
+    uint32_t wid;
+    PfxWindow *window;
+}
+
+- (instancetype)initWithWID:(uint32_t)wid;
+@end
+
+@implementation PfxWindowContext
+- (instancetype)initWithWID:(uint32_t)pwid {
+    self = [super init];
+    if (self != nil)
+        self->wid = pwid;
+
+    return self;
+}
+@end
+
+@interface PfxWindow : NSWindow
+@end
+
+@implementation PfxWindow
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow {
+    return YES;
+}
+@end
+
+@interface PfxWindowDelegate : NSObject <NSWindowDelegate> {
+    PfxWindowContext *context;
+}
+
+- (instancetype)initWithContext:(PfxWindowContext *)ctx;
+@end
+
+@implementation PfxWindowDelegate
+- (instancetype)initWithContext:(PfxWindowContext *)ctx {
+    self = [super init];
+    if (self != nil)
+        context = ctx;
+
+    return self;
+}
+
+- (BOOL)windowShouldClose:(NSWindow *)sender {
+    pfx_ak_close_requested_callback(context->wid);
+
+    return NO;
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+    [context->window setDelegate:nil];
+
+    pfx_ak_window_closed_callback(context->wid);
+
+    [self release];
+}
+
+@end
+
+int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
     @autoreleasepool {
+        PfxWindowContext *ctx = [[PfxWindowContext alloc] initWithWID:wid];
+        *res = ctx;
+
         NSRect contentRect = NSMakeRect(0, 0, width, height);
         NSUInteger styleMask = NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
                                NSWindowStyleMaskResizable;
 
-        window = [[PfxWindow alloc]
+        ctx->window = [[PfxWindow alloc]
                 initWithContentRect:contentRect
                           styleMask:styleMask
                             backing:NSBackingStoreBuffered
                               defer:NO
         ];
 
-        // todo: setcontentview, makefirstresponder setDelegate
 
-        [window setTitle:@"hello"];
-        [window setRestorable:NO];
-        [window setTabbingMode:NSWindowTabbingModeDisallowed];
-        [window setCollectionBehavior:(NSWindowCollectionBehaviorFullScreenPrimary |
-                                       NSWindowCollectionBehaviorManaged)];
-        [window setAcceptsMouseMovedEvents:YES];
+        PfxWindowDelegate *delegate = [[PfxWindowDelegate alloc] initWithContext:ctx];
+        [ctx->window setDelegate:delegate];
 
-        [window center];
-        [window makeKeyAndOrderFront:NSApp];
-        [window orderFrontRegardless];
+        // todo: setcontentview, makefirstresponder
+
+        [ctx->window setTitle:@"hello"];
+        [ctx->window setRestorable:NO];
+        [ctx->window setTabbingMode:NSWindowTabbingModeDisallowed];
+        [ctx->window setCollectionBehavior:(NSWindowCollectionBehaviorFullScreenPrimary |
+                                            NSWindowCollectionBehaviorManaged)];
+        [ctx->window setAcceptsMouseMovedEvents:YES];
+
+        [ctx->window center];
+        [ctx->window makeKeyAndOrderFront:NSApp];
+        [ctx->window orderFrontRegardless];
 
         return PFX_SUCCESS;
     }

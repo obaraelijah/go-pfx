@@ -4,13 +4,13 @@ import (
 	"errors"
 	"sync/atomic"
 )
-import "C"
 
 /*
 #cgo darwin LDFLAGS: -framework AppKit
-
 #include "appkit.h"
 */
+
+import "C"
 
 var (
 	runCounter        atomic.Uint32
@@ -38,18 +38,6 @@ func Run(cb Callbacks) error {
 
 	case C.PFX_NOT_MAIN_THREAD:
 		return ErrNotMainThread
-
-	default:
-		panic("unexpected response")
-	}
-}
-
-func NewWindow(width int, height int) error {
-	r := C.pfx_ak_new_window(C.int(width), C.int(height))
-
-	switch r {
-	case C.PFX_SUCCESS:
-		return nil
 
 	default:
 		panic("unexpected response")
