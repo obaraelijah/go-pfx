@@ -16,8 +16,6 @@
 }
 @end
 
-PfxApplicationDelegate *appDelegate;
-
 int pfx_ak_run() {
     @autoreleasepool {
         if (![NSThread isMainThread]) {
@@ -26,7 +24,7 @@ int pfx_ak_run() {
 
         [NSApplication sharedApplication];
 
-        appDelegate = [[PfxApplicationDelegate alloc] init];
+        PfxApplicationDelegate *appDelegate = [[[PfxApplicationDelegate alloc] init] autorelease];
 
         // Ensure we are in multi-threading mode
         [NSThread detachNewThreadSelector:@selector(stubThread:)
@@ -45,12 +43,14 @@ void pfx_ak_stop() {
     [NSApp stop:NSApp];
 }
 
+@class PfxWindowDelegate;
 @class PfxWindow;
 
 @interface PfxWindowContext : NSObject {
 @public
     uint32_t wid;
     PfxWindow *window;
+    PfxWindowDelegate *delegate;
 }
 
 - (instancetype)initWithWID:(uint32_t)wid;
@@ -80,7 +80,7 @@ void pfx_ak_stop() {
 @end
 
 @interface PfxWindowDelegate : NSObject <NSWindowDelegate> {
-    PfxWindowContext *context;
+     PfxWindowContext *context;
 }
 
 - (instancetype)initWithContext:(PfxWindowContext *)ctx;
@@ -102,12 +102,7 @@ void pfx_ak_stop() {
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-    [context->window setDelegate:nil];
-
     pfx_ak_window_closed_callback(context->wid);
-
-    [self release];
-    [context release];
 }
 
 @end
@@ -127,10 +122,9 @@ int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
                             backing:NSBackingStoreBuffered
                               defer:NO
         ];
-
-
-        PfxWindowDelegate *delegate = [[PfxWindowDelegate alloc] initWithContext:ctx];
-        [ctx->window setDelegate:delegate];
+        [ctx->window setReleasedWhenClosed:NO];
+        ctx->delegate = [[PfxWindowDelegate alloc] initWithContext:ctx];
+        [ctx->window setDelegate:ctx->delegate];
 
         // todo: setcontentview, makefirstresponder
 
@@ -162,6 +156,9 @@ void pfx_ak_free_context(id w) {
     @autoreleasepool {
         PfxWindowContext *ctx = w;
 
+        [ctx->window setDelegate:nil];
+        [ctx->delegate release];
+        [ctx->window release];
         [ctx release];
     }
 }

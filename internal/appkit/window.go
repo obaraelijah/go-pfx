@@ -47,11 +47,15 @@ func pfx_ak_close_requested_callback(id uint32) {
 func pfx_ak_window_closed_callback(id uint32) {
 	wid := Window(id)
 
-	if _, ok := windows.LoadAndDelete(wid); !ok {
+	raw, ok := windows.LoadAndDelete(wid)
+	if !ok {
 		return
 	}
 
 	callbacks.Closed(wid)
+
+	ptr := raw.(C.id)
+	C.pfx_ak_free_context(ptr)
 }
 
 func (wid Window) Close() {
