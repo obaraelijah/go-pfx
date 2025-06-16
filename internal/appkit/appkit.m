@@ -41,6 +41,10 @@ int pfx_ak_run() {
     }
 }
 
+void pfx_ak_stop() {
+    [NSApp stop:NSApp];
+}
+
 @class PfxWindow;
 
 @interface PfxWindowContext : NSObject {
@@ -103,6 +107,7 @@ int pfx_ak_run() {
     pfx_ak_window_closed_callback(context->wid);
 
     [self release];
+    [context release];
 }
 
 @end
@@ -141,5 +146,22 @@ int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
         [ctx->window orderFrontRegardless];
 
         return PFX_SUCCESS;
+    }
+}
+
+More actions
+void pfx_ak_close_window(id w) {
+    @autoreleasepool {
+        PfxWindowContext *ctx = w;
+
+        [ctx->window close];
+    }
+}
+
+void pfx_ak_free_context(id w) {
+    @autoreleasepool {
+        PfxWindowContext *ctx = w;
+
+        [ctx release];
     }
 }

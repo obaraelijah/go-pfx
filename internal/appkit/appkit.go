@@ -21,6 +21,10 @@ var (
 
 type Callbacks struct {
 	Init func()
+
+	CloseRequested func(w Window)
+
+	Closed func(w Window)
 }
 
 func Run(cb Callbacks) error {
@@ -47,4 +51,17 @@ func Run(cb Callbacks) error {
 //export pfx_ak_init_callback
 func pfx_ak_init_callback() {
 	callbacks.Init()
+}
+
+func Stop() {
+	C.pfx_ak_stop()
+
+	windows.Range(func(key, value any) bool {
+		ptr := value.(C.id)
+		C.pfx_ak_free_context(ptr)
+
+		return true
+	})
+
+	windows.Clear()
 }
