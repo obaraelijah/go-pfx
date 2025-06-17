@@ -68,3 +68,14 @@ func (wid Window) Close() {
 
 	C.pfx_ak_close_window(ptr)
 }
+
+//export pfx_ak_draw_callback
+func pfx_ak_draw_callback(id uint32) {
+	wid := Window(id)
+
+	if _, ok := windows.Load(wid); !ok {
+		return
+	}
+
+	callbacks.Render(wid)
+}

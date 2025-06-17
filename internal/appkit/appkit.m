@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
+#import <QuartzCore/CAMetalLayer.h>
 #include "appkit.h"
 
 @interface PfxApplicationDelegate : NSObject <NSApplicationDelegate>
@@ -43,14 +44,17 @@ void pfx_ak_stop() {
     [NSApp stop:NSApp];
 }
 
-@class PfxWindowDelegate;
 @class PfxWindow;
+@class PfxWindowDelegate;
+@class PfxView;
 
 @interface PfxWindowContext : NSObject {
 @public
     uint32_t wid;
     PfxWindow *window;
     PfxWindowDelegate *delegate;
+    PfxView *view;
+    CAMetalLayer *layer;
 }
 
 - (instancetype)initWithWID:(uint32_t)wid;
@@ -80,7 +84,7 @@ void pfx_ak_stop() {
 @end
 
 @interface PfxWindowDelegate : NSObject <NSWindowDelegate> {
-     PfxWindowContext *context;
+    PfxWindowContext *context;
 }
 
 - (instancetype)initWithContext:(PfxWindowContext *)ctx;
@@ -107,6 +111,96 @@ void pfx_ak_stop() {
 
 @end
 
+@interface PfxView : NSView <NSTextInputClient, CALayerDelegate> {
+    PfxWindowContext *context;
+}
+
+- (instancetype)initWithContext:(PfxWindowContext *)ctx;
+
+@end
+
+@implementation PfxView
+- (instancetype)initWithContext:(PfxWindowContext *)ctx {
+    self = [super init];
+    if (self != nil)
+        context = ctx;
+
+    [self setWantsLayer:YES];
+    [self setLayerContentsRedrawPolicy:NSViewLayerContentsRedrawDuringViewResize];
+
+    return self;
+}
+
+- (CALayer *)makeBackingLayer {
+    context->layer = [CAMetalLayer layer];
+    [context->layer setDelegate:self];
+    return context->layer;
+}
+
+- (BOOL)canBecomeKeyView {
+    return YES;
+}
+
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
+- (BOOL)wantsUpdateLayer {
+    return YES;
+}
+
+ - (void)updateLayer {
+     pfx_ak_draw_callback(context->wid);
+ }
+
+- (void)displayLayer:(CALayer *)layer {
+    pfx_ak_draw_callback(context->wid);
+}
+
+- (BOOL)canDrawSubviewsIntoLayer {
+    return NO;
+}
+
+- (BOOL)hasMarkedText {
+    return NO;
+}
+
+- (NSRange)markedRange {
+    return NSMakeRange(NSNotFound, 0);
+}
+
+- (NSRange)selectedRange {
+    return NSMakeRange(NSNotFound, 0);
+}
+
+- (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(nullable NSRangePointer)actualRange {
+    return NSMakeRect(0, 0, 0, 0);
+}
+
+- (NSUInteger)characterIndexForPoint:(NSPoint)point {
+    return 0;
+}
+
+- (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText {
+    return [NSArray array];
+}
+
+- (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)range actualRange:(nullable NSRangePointer)actualRange {
+    return nil;
+}
+
+- (void)insertText:(nonnull id)string replacementRange:(NSRange)replacementRange {
+}
+
+
+- (void)setMarkedText:(nonnull id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange {
+}
+
+- (void)unmarkText {
+}
+
+@end
+
 int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
     @autoreleasepool {
         PfxWindowContext *ctx = [[PfxWindowContext alloc] initWithWID:wid];
@@ -126,7 +220,10 @@ int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
         ctx->delegate = [[PfxWindowDelegate alloc] initWithContext:ctx];
         [ctx->window setDelegate:ctx->delegate];
 
-        // todo: setcontentview, makefirstresponder
+        ctx->view = [[PfxView alloc] initWithContext:ctx];
+        [ctx->window setContentView:ctx->view];
+        [ctx->window makeFirstResponder:ctx->view];
+        [ctx->view setNeedsDisplay:YES];
 
         [ctx->window setTitle:@"hello"];
         [ctx->window setRestorable:NO];
@@ -158,6 +255,8 @@ void pfx_ak_free_context(id w) {
 
         [ctx->window setDelegate:nil];
         [ctx->delegate release];
+        [ctx->window setContentView:nil];
+        [ctx->view release];
         [ctx->window release];
         [ctx release];
     }

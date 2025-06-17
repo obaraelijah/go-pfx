@@ -6,7 +6,7 @@ import (
 )
 
 /*
-#cgo darwin LDFLAGS: -framework AppKit
+#cgo darwin LDFLAGS: -framework AppKit -framework QuartzCore
 #include "appkit.h"
 */
 
@@ -25,6 +25,8 @@ type Callbacks struct {
 	CloseRequested func(w Window)
 
 	Closed func(w Window)
+
+	Render func(w Window)
 }
 
 func Run(cb Callbacks) error {

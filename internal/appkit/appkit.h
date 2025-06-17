@@ -23,6 +23,8 @@ void pfx_ak_close_requested_callback(uint32_t wid);
 
 void pfx_ak_window_closed_callback(uint32_t wid);
 
+void pfx_ak_draw_callback(uint32_t wid);
+
 void pfx_ak_close_window(id w);
 
 void pfx_ak_free_context(id w);
