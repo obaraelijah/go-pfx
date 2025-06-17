@@ -201,7 +201,7 @@ void pfx_ak_stop() {
 
 @end
 
-int pfx_ak_new_window(uint64_t wid, int width, int height, id *res) {
+int pfx_ak_new_window(uint64_t wid, int width, int height, id *res, id *res_wh) {
     @autoreleasepool {
         PfxWindowContext *ctx = [[PfxWindowContext alloc] initWithWID:wid];
         *res = ctx;
@@ -235,6 +235,8 @@ int pfx_ak_new_window(uint64_t wid, int width, int height, id *res) {
         [ctx->window center];
         [ctx->window makeKeyAndOrderFront:NSApp];
         [ctx->window orderFrontRegardless];
+
+        *res_wh = ctx->layer;
 
         return PFX_SUCCESS;
     }

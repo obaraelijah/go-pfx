@@ -17,6 +17,8 @@ void pfx_ak_stop();
 
 void pfx_ak_init_callback();
 
+int pfx_ak_new_window(uint64_t wid, int width, int height, id *res, id *res_wh);
+
 int pfx_ak_new_window(uint64_t wid, int width, int height, id *res);
 
 void pfx_ak_close_requested_callback(uint64_t wid);
