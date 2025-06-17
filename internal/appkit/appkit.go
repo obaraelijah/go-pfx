@@ -1,8 +1,9 @@
 package appkit
 
 import (
-	"errors"
 	"sync/atomic"
+
+	"github.com/obaraelijah/go-pfx/hal"
 )
 
 /*
@@ -13,28 +14,23 @@ import (
 import "C"
 
 var (
-	runCounter        atomic.Uint32
-	callbacks         Callbacks
-	ErrAlreadyRunning = errors.New("already running")
-	ErrNotMainThread  = errors.New("not on main thread")
+	runCounter atomic.Uint32
+	halCfg     hal.PlatformConfig
 )
 
-type Callbacks struct {
-	Init func()
-
-	CloseRequested func(w Window)
-
-	Closed func(w Window)
-
-	Render func(w Window)
+func NewPlatform() hal.Platform {
+	return &Platform{}
 }
 
-func Run(cb Callbacks) error {
+type Platform struct {
+}
+
+func (p *Platform) Run(cfg hal.PlatformConfig) error {
 	if !runCounter.CompareAndSwap(0, 1) {
-		return ErrAlreadyRunning
+		return hal.ErrAlreadyRunning
 	}
 
-	callbacks = cb
+	halCfg = cfg
 
 	r := C.pfx_ak_run()
 
@@ -43,7 +39,7 @@ func Run(cb Callbacks) error {
 		return nil
 
 	case C.PFX_NOT_MAIN_THREAD:
-		return ErrNotMainThread
+		return hal.ErrNotMainThread
 
 	default:
 		panic("unexpected response")
@@ -52,10 +48,12 @@ func Run(cb Callbacks) error {
 
 //export pfx_ak_init_callback
 func pfx_ak_init_callback() {
-	callbacks.Init()
+	if err := halCfg.Init(); err != nil {
+		panic(err)
+	}
 }
 
-func Stop() {
+func (p *Platform) Exit() {
 	C.pfx_ak_stop()
 
 	windows.Range(func(key, value any) bool {

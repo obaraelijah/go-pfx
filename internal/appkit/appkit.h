@@ -17,13 +17,13 @@ void pfx_ak_stop();
 
 void pfx_ak_init_callback();
 
-int pfx_ak_new_window(uint32_t wid, int width, int height, id *res);
+int pfx_ak_new_window(uint64_t wid, int width, int height, id *res);
 
-void pfx_ak_close_requested_callback(uint32_t wid);
+void pfx_ak_close_requested_callback(uint64_t wid);
 
-void pfx_ak_window_closed_callback(uint32_t wid);
+void pfx_ak_window_closed_callback(uint64_t wid);
 
-void pfx_ak_draw_callback(uint32_t wid);
+void pfx_ak_draw_callback(uint64_t wid);
 
 void pfx_ak_close_window(id w);
 

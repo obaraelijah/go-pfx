@@ -50,18 +50,18 @@ void pfx_ak_stop() {
 
 @interface PfxWindowContext : NSObject {
 @public
-    uint32_t wid;
+    uint64_t wid;
     PfxWindow *window;
     PfxWindowDelegate *delegate;
     PfxView *view;
     CAMetalLayer *layer;
 }
 
-- (instancetype)initWithWID:(uint32_t)wid;
+- (instancetype)initWithWID:(uint64_t)wid;
 @end
 
 @implementation PfxWindowContext
-- (instancetype)initWithWID:(uint32_t)pwid {
+- (instancetype)initWithWID:(uint64_t)pwid {
     self = [super init];
     if (self != nil)
         self->wid = pwid;
@@ -201,7 +201,7 @@ void pfx_ak_stop() {
 
 @end
 
-int pfx_ak_new_window(uint32_t wid, int width, int height, id *res) {
+int pfx_ak_new_window(uint64_t wid, int width, int height, id *res) {
     @autoreleasepool {
         PfxWindowContext *ctx = [[PfxWindowContext alloc] initWithWID:wid];
         *res = ctx;
