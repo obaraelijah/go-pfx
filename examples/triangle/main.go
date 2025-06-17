@@ -33,6 +33,8 @@ func (e *Example) init(app *pfx.Application) error {
 
 	e.window = window
 
+	log.Println("init complete")
+
 	return nil
 }
 
@@ -56,6 +58,15 @@ func (e *Example) render() {
 
 		log.Println("FPS", count)
 		count = 0
+	}
+
+	frame, err := e.window.BeginFrame()
+	if err != nil {
+		panic(err)
+	}
+
+	if err := frame.Present(); err != nil {
+		panic(err)
 	}
 }
 
