@@ -92,8 +92,9 @@ func (a *Application) windowRender(id hal.Window) {
 }
 
 type Frame struct {
-	presented bool
+	app       *Application
 	texture   hal.SurfaceTexture
+	presented bool
 }
 
 func (w *Window) BeginFrame() (*Frame, error) {
@@ -103,6 +104,7 @@ func (w *Window) BeginFrame() (*Frame, error) {
 	}
 
 	return &Frame{
+		app:     w.app,
 		texture: texture,
 	}, nil
 }
@@ -119,4 +121,8 @@ func (f *Frame) Present() error {
 	f.presented = true
 
 	return f.texture.Present()
+}
+
+func (f *Frame) TextureView() *TextureView {
+	return viewFromHal(f.texture.View())
 }

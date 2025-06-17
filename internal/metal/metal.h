@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #if defined(__OBJC__)
 
@@ -14,8 +15,26 @@ int pfx_mtl_open(id *res, id *res_queue);
 
 int pfx_mtl_configure_surface(id device, id layer);
 
-void pfx_mtl_acquire_texture(id layer, id *res);
+void pfx_mtl_acquire_texture(id layer, id *res_draw, id *res_tex);
 
-void pfx_mtl_present_texture(id queue, id text);
+void pfx_mtl_present_texture(id queue, id draw);
 
-void pfx_mtl_discard_surface_texture(id text);
+void pfx_mtl_discard_surface_texture(id draw);
+
+void pfx_mtl_create_command_buf(id queue, id *res);
+
+typedef struct ColorAttachment {
+    id view;
+    bool load;
+    bool store;
+    double r;
+    double g;
+    double b;
+    double a;
+} ColorAttachment;
+
+void pfx_mtl_begin_rpass(id buf, const struct ColorAttachment *colors, uint64_t colors_len, id *res);
+
+void pfx_mtl_end_rpass(id enc);
+
+void pfx_mtl_cbuf_submit(id buffer);

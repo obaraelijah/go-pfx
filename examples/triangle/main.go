@@ -65,6 +65,25 @@ func (e *Example) render() {
 		panic(err)
 	}
 
+	defer frame.Close()
+
+	buf := frame.NewCommandBuffer()
+
+	rp := buf.BeginRenderPass(pfx.RenderPassDescriptor{
+		ColorAttachments: []pfx.ColorAttachment{
+			{
+				Target:     frame,
+				Load:       false,
+				ClearColor: pfx.NewColor(1, 0, 1, 1),
+				Discard:    false,
+			},
+		},
+	})
+
+	rp.End()
+
+	buf.Submit()
+
 	if err := frame.Present(); err != nil {
 		panic(err)
 	}
