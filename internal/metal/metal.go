@@ -61,18 +61,16 @@ type Surface struct {
 	layer    C.id
 }
 
-func (s *Surface) AcquireTexture() (hal.SurfaceTexture, error) {
-	var (
-		drawable C.id
-		texture  C.id
-	)
-
-	C.pfx_mtl_acquire_texture(s.layer, &drawable, &texture)
+func (s *Surface) AcquireTexture(rawTK hal.RenderToken) (hal.SurfaceTexture, error) {
+	tk, ok := rawTK.(hal.MetalRenderToken)
+	if !ok {
+		panic("unexpected render token")
+	}
 
 	return &SurfaceTexture{
 		graphics: s.graphics,
-		drawable: drawable,
-		texture:  texture,
+		drawable: C.id(tk.Drawable),
+		texture:  C.pfx_mtl_get_drawable_texture(C.id(tk.Drawable)),
 	}, nil
 }
 

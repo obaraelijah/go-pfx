@@ -23,7 +23,9 @@ int pfx_ak_new_window(uint64_t wid, int width, int height, id *res);
 
 void pfx_ak_close_requested_callback(uint64_t wid);
 
-void pfx_ak_window_closed_callback(uint64_t wid);
+void gfx_ak_draw_callback(uint64_t wid, id drawable);
+
+void gfx_ak_resize_callback(uint64_t wid, double width, double height);
 
 void pfx_ak_draw_callback(uint64_t wid);
 

@@ -41,6 +41,7 @@ func (a *Application) run() error {
 		WindowCloseRequested: a.windowCloseRequested,
 		WindowClosed:         a.windowClosed,
 		WindowRender:         a.windowRender,
+		WindowResized:        a.windowResized,
 	})
 }
 

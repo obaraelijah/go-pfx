@@ -15,7 +15,7 @@ int pfx_mtl_open(id *res, id *res_queue);
 
 int pfx_mtl_configure_surface(id device, id layer);
 
-void pfx_mtl_acquire_texture(id layer, id *res_draw, id *res_tex);
+id pfx_mtl_get_drawable_texture(id drawable);
 
 void pfx_mtl_present_texture(id queue, id draw);
 

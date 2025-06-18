@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <QuartzCore/CAMetalDisplayLink.h>
 #include "appkit.h"
 
 @interface PfxApplicationDelegate : NSObject <NSApplicationDelegate>
@@ -90,6 +91,18 @@ void pfx_ak_stop() {
 - (instancetype)initWithContext:(PfxWindowContext *)ctx;
 @end
 
+@interface PfxView : NSView <NSTextInputClient, CALayerDelegate, CAMetalDisplayLinkDelegate> {
+    PfxWindowContext *context;
+    CAMetalDisplayLink *displayLink;
+    CFTimeInterval _previousTargetPresentationTimestamp;
+}
+
+- (instancetype)initWithContext:(PfxWindowContext *)ctx;
+
+- (void)stopMetalLink;
+
+@end
+
 @implementation PfxWindowDelegate
 - (instancetype)initWithContext:(PfxWindowContext *)ctx {
     self = [super init];
@@ -106,16 +119,10 @@ void pfx_ak_stop() {
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
+    [context->view stopMetalLink];
+
     pfx_ak_window_closed_callback(context->wid);
 }
-
-@end
-
-@interface PfxView : NSView <NSTextInputClient, CALayerDelegate> {
-    PfxWindowContext *context;
-}
-
-- (instancetype)initWithContext:(PfxWindowContext *)ctx;
 
 @end
 
@@ -132,9 +139,79 @@ void pfx_ak_stop() {
 }
 
 - (CALayer *)makeBackingLayer {
-    context->layer = [CAMetalLayer layer];
+    context->layer = [[CAMetalLayer layer] retain];
     [context->layer setDelegate:self];
     return context->layer;
+}
+
+- (void)viewDidMoveToWindow {
+    [displayLink invalidate];
+
+    displayLink = [[CAMetalDisplayLink alloc] initWithMetalLayer:context->layer];
+//     displayLink.preferredFrameRateRange = CAFrameRateRangeMake(120.0, 120.0, 120.0);
+    displayLink.preferredFrameLatency = 2;
+    displayLink.paused = NO;
+    displayLink.delegate = self;
+Add commentMore actions
+    _previousTargetPresentationTimestamp = CACurrentMediaTime();
+    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSEventTrackingRunLoopMode];
+
+    [self resizeDrawable];
+}
+
+- (void)metalDisplayLink:(CAMetalDisplayLink *)linkAdd commentMore actions
+             needsUpdate:(CAMetalDisplayLinkUpdate *_Nonnull)update {
+    CFTimeInterval deltaTime = _previousTargetPresentationTimestamp - update.targetPresentationTimestamp;
+    _previousTargetPresentationTimestamp = update.targetPresentationTimestamp;
+
+    pfx_ak_draw_callback(context->wid, update.drawable);
+}
+
+- (void)stopMetalLink {
+    [displayLink removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [displayLink removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSEventTrackingRunLoopMode];
+}
+
+- (void)dealloc {
+    [displayLink invalidate];Add commentMore actions
+
+    [super dealloc];
+}
+
+- (void)viewDidChangeBackingProperties {
+    [super viewDidChangeBackingProperties];
+    [self resizeDrawable];
+}
+
+- (void)setFrameSize:(NSSize)size {
+    [super setFrameSize:size];
+    [self resizeDrawable];
+}
+
+- (void)setBoundsSize:(NSSize)size {
+    [super setBoundsSize:size];
+    [self resizeDrawable];
+}
+
+- (void)resizeDrawable {
+    CGFloat scaleFactor = self.window.screen.backingScaleFactor;
+    CGSize newSize = self.bounds.size;
+    newSize.width *= scaleFactor;
+    newSize.height *= scaleFactor;
+
+    if (newSize.width <= 0 || newSize.height <= 0) {
+        return;
+    }
+
+    if (newSize.width == context->layer.drawableSize.width &&
+        newSize.height == context->layer.drawableSize.height) {
+        return;
+    }
+
+    context->layer.drawableSize = newSize;
+
+    pfx_ak_resize_callback(context->wid, newSize.width, newSize.height);
 }
 
 - (BOOL)canBecomeKeyView {
@@ -143,18 +220,6 @@ void pfx_ak_stop() {
 
 - (BOOL)acceptsFirstResponder {
     return YES;
-}
-
-- (BOOL)wantsUpdateLayer {
-    return YES;
-}
-
- - (void)updateLayer {
-     pfx_ak_draw_callback(context->wid);
- }
-
-- (void)displayLayer:(CALayer *)layer {
-    pfx_ak_draw_callback(context->wid);
 }
 
 - (BOOL)canDrawSubviewsIntoLayer {
@@ -191,7 +256,6 @@ void pfx_ak_stop() {
 
 - (void)insertText:(nonnull id)string replacementRange:(NSRange)replacementRange {
 }
-
 
 - (void)setMarkedText:(nonnull id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange {
 }
