@@ -265,7 +265,7 @@ Add commentMore actions
 
 @end
 
-int pfx_ak_new_window(uint64_t wid, int width, int height, id *res, id *res_wh) {
+int pfx_ak_new_window(uint64_t wid, const void *title, int title_len, int width, int height, id *res, id *res_wh) {
     @autoreleasepool {
         PfxWindowContext *ctx = [[PfxWindowContext alloc] initWithWID:wid];
         *res = ctx;
@@ -289,7 +289,7 @@ int pfx_ak_new_window(uint64_t wid, int width, int height, id *res, id *res_wh) 
         [ctx->window makeFirstResponder:ctx->view];
         [ctx->view setNeedsDisplay:YES];
 
-        [ctx->window setTitle:@"hello"];
+        [ctx->window setTitle:[[[NSString alloc] initWithBytes:title length:title_len encoding:NSUTF8StringEncoding] autorelease]];
         [ctx->window setRestorable:NO];
         [ctx->window setTabbingMode:NSWindowTabbingModeDisallowed];
         [ctx->window setCollectionBehavior:(NSWindowCollectionBehaviorFullScreenPrimary |
