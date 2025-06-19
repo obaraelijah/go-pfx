@@ -79,16 +79,18 @@ func (s *Surface) TextureFormat() hal.TextureFormat {
 	return s.format
 }
 
-func (s *Surface) AcquireTexture(rawTK hal.RenderToken) (hal.SurfaceTexture, error) {
-	tk, ok := rawTK.(hal.MetalRenderToken)
-	if !ok {
-		panic("unexpected render token")
-	}
+func (s *Surface) AcquireTexture() (hal.SurfaceTexture, error) {
+	var (
+		draw C.id
+		text C.id
+	)
+
+	C.gfx_mtl_acquire_surface(s.layer, &draw, &text)
 
 	return &SurfaceTexture{
 		graphics: s.graphics,
-		drawable: C.id(tk.Drawable),
-		texture:  C.pfx_mtl_get_drawable_texture(C.id(tk.Drawable)),
+		drawable: draw,
+		texture:  text,
 	}, nil
 }
 
@@ -205,7 +207,7 @@ func (g *Graphics) CreateRenderPipeline(des hal.RenderPipelineDescriptor) (hal.R
 	)
 
 	if des.VertexFunction != nil {
-		vf, ok := des.VertexFunction.(*ShaderFunction)Add commentMore actions
+		vf, ok := des.VertexFunction.(*ShaderFunction)
 		if !ok {
 			panic("unexpected type")
 		}

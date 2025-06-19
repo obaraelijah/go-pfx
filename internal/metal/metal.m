@@ -27,10 +27,11 @@ int pfx_mtl_configure_surface(id <MTLDevice> device, CAMetalLayer *layer, int pi
     }
 }
 
-id pfx_mtl_get_drawable_texture(id <CAMetalDrawable> drawable) {
+void pfx_mtl_acquire_surface(CAMetalLayer *layer, id* res_draw, id* res_text) {
     @autoreleasepool {
-        [drawable retain];
-        return [drawable texture];
+        id<CAMetalDrawable> drawable = [[layer nextDrawable] retain];
+        *res_draw = drawable;
+        *res_text = [drawable texture];
     }
 }
 

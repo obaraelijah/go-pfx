@@ -16,7 +16,7 @@ int pfx_mtl_open(id *res, id *res_queue);
 
 int pfx_mtl_configure_surface(id device, id layer, int pixelFormat);
 
-id pfx_mtl_get_drawable_texture(id drawable);
+void pfx_mtl_acquire_surface(id layer, id* res_draw, id* res_text);
 
 void pfx_mtl_present_texture(id queue, id draw);
 
@@ -41,7 +41,7 @@ int pfx_mtl_create_render_pipeline(
         const struct PipelineColorAttachment *colors,
         uint64_t colors_len,
         id *res_lib,
-        char **res_errAdd commentMore actions
+        char **res_err
 );
 
 typedef struct ColorAttachment {

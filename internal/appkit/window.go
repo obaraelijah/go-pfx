@@ -75,7 +75,7 @@ func pfx_ak_window_closed_callback(id uint64) {
 }
 
 func pfx_ak_draw_callback(id uint64, drawable unsafe.Pointer) {
-	halCfg.WindowRender(hal.Window(id), hal.MetalRenderToken{Drawable: drawable})
+	// halCfg.WindowRender(hal.Window(id), hal.MetalRenderToken{Drawable: drawable})
 }
 
 //export pfx_ak_resize_callback

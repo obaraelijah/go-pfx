@@ -40,7 +40,6 @@ func (a *Application) run() error {
 		Init:                 a.init,
 		WindowCloseRequested: a.windowCloseRequested,
 		WindowClosed:         a.windowClosed,
-		WindowRender:         a.windowRender,
 		WindowResized:        a.windowResized,
 	})
 }

@@ -147,21 +147,19 @@ void pfx_ak_stop() {
 - (void)viewDidMoveToWindow {
     [displayLink invalidate];
 
-    displayLink = [[CAMetalDisplayLink alloc] initWithMetalLayer:context->layer];
+//    displayLink = [[CAMetalDisplayLink alloc] initWithMetalLayer:context->layer];
 //     displayLink.preferredFrameRateRange = CAFrameRateRangeMake(120.0, 120.0, 120.0);
-    displayLink.preferredFrameLatency = 2;
-    displayLink.paused = NO;
-    displayLink.delegate = self;
-Add commentMore actions
+//    displayLink.preferredFrameLatency = 2;
+//    displayLink.paused = NO;
+//    displayLink.delegate = self;
     _previousTargetPresentationTimestamp = CACurrentMediaTime();
-    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSEventTrackingRunLoopMode];
+//    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+//    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSEventTrackingRunLoopMode];
 
     [self resizeDrawable];
 }
 
-- (void)metalDisplayLink:(CAMetalDisplayLink *)linkAdd commentMore actions
-             needsUpdate:(CAMetalDisplayLinkUpdate *_Nonnull)update {
+- (void)metalDisplayLink:(CAMetalDisplayLink *)link             needsUpdate:(CAMetalDisplayLinkUpdate *_Nonnull)update {
     CFTimeInterval deltaTime = _previousTargetPresentationTimestamp - update.targetPresentationTimestamp;
     _previousTargetPresentationTimestamp = update.targetPresentationTimestamp;
 
@@ -174,8 +172,7 @@ Add commentMore actions
 }
 
 - (void)dealloc {
-    [displayLink invalidate];Add commentMore actions
-
+    [displayLink invalidate];
     [super dealloc];
 }
 
