@@ -14,7 +14,7 @@ typedef void *id;
 
 int pfx_mtl_open(id *res, id *res_queue);
 
-int pfx_mtl_configure_surface(id device, id layer);
+int pfx_mtl_configure_surface(id device, id layer, int pixelFormat);
 
 id pfx_mtl_get_drawable_texture(id drawable);
 
@@ -30,6 +30,20 @@ void pfx_mtl_buffer_from_bytes(id device, const void *data, int data_len, id *re
 
 void pfx_mtl_create_command_buf(id queue, id *res);
 
+typedef struct PipelineColorAttachment {
+    int format;
+} PipelineColorAttachment;
+
+int pfx_mtl_create_render_pipeline(
+        id device,
+        id vertFunc,
+        id fragFunc,
+        const struct PipelineColorAttachment *colors,
+        uint64_t colors_len,
+        id *res_lib,
+        char **res_errAdd commentMore actions
+);
+
 typedef struct ColorAttachment {
     id view;
     bool load;
@@ -41,6 +55,12 @@ typedef struct ColorAttachment {
 } ColorAttachment;
 
 void pfx_mtl_begin_rpass(id buf, const struct ColorAttachment *colors, uint64_t colors_len, id *res);
+
+void pfx_mtl_set_render_pipeline(id enc, id pipeline);
+
+void pfx_mtl_set_vertex_buffer(id enc, id buffer);
+
+void pfx_mtl_draw(id enc, int start, int count);
 
 void pfx_mtl_end_rpass(id enc);
 

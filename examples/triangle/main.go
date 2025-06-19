@@ -28,6 +28,7 @@ type Example struct {
 	vertexFunction   *pfx.ShaderFunction
 	fragmentFunction *pfx.ShaderFunction
 	vertData         *pfx.Buffer
+	trianglePipeline *pfx.RenderPipeline
 }
 
 func (e *Example) init(app *pfx.Application) error {
@@ -64,6 +65,19 @@ func (e *Example) init(app *pfx.Application) error {
 	}
 
 	e.fragmentFunction, err = e.shader.Function("fragmentShader")
+	if err != nil {
+		return err
+	}
+
+	e.trianglePipeline, err = e.app.NewRenderPipeline(pfx.RenderPipelineDescriptor{Add commentMore actions
+		VertexFunction:   e.vertexFunction,
+		FragmentFunction: e.fragmentFunction,
+		ColorAttachments: []pfx.RenderPipelineColorAttachment{
+			{
+				Format: e.window.TextureFormat(),
+			},
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -108,15 +122,19 @@ func (e *Example) render(frame *pfx.Frame) {
 	buf := frame.NewCommandBuffer()
 
 	rp := buf.BeginRenderPass(pfx.RenderPassDescriptor{
-		ColorAttachments: []pfx.ColorAttachment{
+		ColorAttachments: []pfx.RenderPassColorAttachment{
 			{
 				Target:     frame,
 				Load:       false,
-				ClearColor: pfx.NewColor(1, 0, 1, 1),
+				ClearColor: pfx.NewColor(0, 0, 0, 1),
 				Discard:    false,
 			},
 		},
 	})
+
+	rp.SetPipeline(e.trianglePipeline)
+	rp.SetVertexBuffer(e.vertData)
+	rp.Draw(0, 3)
 
 	rp.End()
 

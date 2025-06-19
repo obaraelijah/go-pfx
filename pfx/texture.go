@@ -2,6 +2,8 @@ package pfx
 
 import "github.com/obaraelijah/go-pfx/hal"
 
+type TextureFormat = hal.TextureFormat
+
 type TextureViewable interface {
 	TextureView() *TextureView
 }
