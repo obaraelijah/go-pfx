@@ -73,6 +73,10 @@ void pfx_mtl_get_shader_function(id <MTLLibrary> lib, const void *name, int name
     }
 }
 
+void pfx_mtl_buffer_from_bytes(id <MTLDevice> device, const void *data, int data_len, id *res) {
+    *res = [device newBufferWithBytes:data length:data_len options:MTLResourceStorageModeShared];
+}
+
 void pfx_mtl_create_command_buf(id <MTLCommandQueue> queue, id *res) {
     @autoreleasepool {
         id <MTLCommandBuffer> buf = [queue commandBuffer];

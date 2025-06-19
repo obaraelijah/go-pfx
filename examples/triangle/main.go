@@ -1,13 +1,14 @@
 package main
 
 import (
+	_ "embed"
+	"unsafe"
+
 	"log"
 	"runtime"
 	"time"
 
 	"github.com/obaraelijah/go-pfx/pfx"
-
-	_ "embed"
 )
 
 func init() {
@@ -26,6 +27,7 @@ type Example struct {
 	shader           *pfx.Shader
 	vertexFunction   *pfx.ShaderFunction
 	fragmentFunction *pfx.ShaderFunction
+	vertData         *pfx.Buffer
 }
 
 func (e *Example) init(app *pfx.Application) error {
@@ -65,6 +67,14 @@ func (e *Example) init(app *pfx.Application) error {
 	if err != nil {
 		return err
 	}
+
+	floatData := []float32{
+		-0.5, -0.5, 0.0, 0,
+		0.5, -0.5, 0.0, 0,
+		0.0, 0.5, 0.0, 0,
+	}
+	byteData := unsafe.Slice((*byte)(unsafe.Pointer(unsafe.SliceData(floatData))), len(floatData)*4)
+	e.vertData = e.app.NewBuffer(byteData)
 
 	return nil
 }
