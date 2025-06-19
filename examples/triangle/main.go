@@ -2,17 +2,30 @@ package main
 
 import (
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/obaraelijah/go-pfx/pfx"
+
+	_ "embed"
 )
+
+func init() {
+	runtime.LockOSThread()
+}
 
 var lastPrint time.Time
 var count int
 
+//go:embed shader.metal
+var metalShader string
+
 type Example struct {
-	app    *pfx.Application
-	window *pfx.Window
+	app              *pfx.Application
+	window           *pfx.Window
+	shader           *pfx.Shader
+	vertexFunction   *pfx.ShaderFunction
+	fragmentFunction *pfx.ShaderFunction
 }
 
 func (e *Example) init(app *pfx.Application) error {
@@ -35,6 +48,23 @@ func (e *Example) init(app *pfx.Application) error {
 	e.window = window
 
 	log.Println("init complete")
+
+	e.shader, err = e.app.LoadShader(pfx.ShaderConfig{
+		Source: metalShader,
+	})
+	if err != nil {
+		return err
+	}
+
+	e.vertexFunction, err = e.shader.Function("vertexShader")
+	if err != nil {
+		return err
+	}
+
+	e.fragmentFunction, err = e.shader.Function("fragmentShader")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

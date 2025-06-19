@@ -49,6 +49,30 @@ void pfx_mtl_discard_surface_texture(id <CAMetalDrawable> draw) {
     }
 }
 
+int pfx_mtl_create_shader(id <MTLDevice> device, const void *src, int src_len, id *res_lib, char **res_err) {
+    @autoreleasepool {
+        NSError *error = nil;
+        NSString *libSrc = [[[NSString alloc] initWithBytes:src length:src_len encoding:NSUTF8StringEncoding] autorelease];
+
+        id <MTLLibrary> lib = [device newLibraryWithSource:libSrc options:nil error:&error];
+        if (error != nil) {
+            *res_err = strdup([error.localizedDescription UTF8String]);
+            return PFX_SEE_ERROR;
+        }
+
+        *res_lib = lib;
+
+        return PFX_SUCCESS;
+    }
+}
+
+void pfx_mtl_get_shader_function(id <MTLLibrary> lib, const void *name, int name_len, id *res) {
+    @autoreleasepool {
+        NSString *fnName = [[[NSString alloc] initWithBytes:name length:name_len encoding:NSUTF8StringEncoding] autorelease];
+        *res = [lib newFunctionWithName:fnName];
+    }
+}
+
 void pfx_mtl_create_command_buf(id <MTLCommandQueue> queue, id *res) {
     @autoreleasepool {
         id <MTLCommandBuffer> buf = [queue commandBuffer];
