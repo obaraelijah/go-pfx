@@ -50,7 +50,11 @@ type Surface interface {
 	Acquire() (SurfaceFrame, error)
 }
 
+type Texture interface {
+}
+
 type SurfaceFrame interface {
+	Texture() Texture
 	View() TextureView
 
 	Present() error
@@ -93,6 +97,8 @@ type RenderPassDescriptor struct {
 }
 
 type CommandBuffer interface {
+	Barrier(barrier Barrier)
+
 	BeginRenderPass(description RenderPassDescriptor)
 	SetRenderPipeline(pipeline RenderPipeline)
 	SetVertexBuffer(data Buffer)
@@ -100,6 +106,25 @@ type CommandBuffer interface {
 	EndRenderPass()
 
 	Submit()
+}
+
+type TextureLayout int
+
+const (
+	TextureLayoutUndefined TextureLayout = iota
+	TextureLayoutAttachment
+	TextureLayoutRead
+	TextureLayoutPresent
+)
+
+type TextureBarrier struct {
+	Texture   Texture
+	SrcLayout TextureLayout
+	DstLayout TextureLayout
+}
+
+type Barrier struct {
+	Textures []TextureBarrier
 }
 
 type TextureView interface {
