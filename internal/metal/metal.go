@@ -79,42 +79,42 @@ func (s *Surface) TextureFormat() hal.TextureFormat {
 	return s.format
 }
 
-func (s *Surface) AcquireTexture() (hal.SurfaceTexture, error) {
+func (s *Surface) Acquire() (hal.SurfaceFrame, error) {
 	var (
 		draw C.id
 		text C.id
 	)
 
-	C.gfx_mtl_acquire_surface(s.layer, &draw, &text)
+	C.pfx_mtl_acquire_surface(s.layer, &draw, &text)
 
-	return &SurfaceTexture{
+	return &SurfaceFrame{
 		graphics: s.graphics,
 		drawable: draw,
 		texture:  text,
 	}, nil
 }
 
-type SurfaceTexture struct {
+type SurfaceFrame struct {
 	graphics *Graphics
 	drawable C.id
 	texture  C.id
 }
 
-func (s *SurfaceTexture) Present() error {
-	C.pfx_mtl_present_texture(s.graphics.queue, s.drawable)
+func (f *SurfaceFrame) Present() error {
+	C.pfx_mtl_present_texture(f.graphics.queue, f.drawable)
 
 	return nil
 }
 
-func (s *SurfaceTexture) Discard() {
-	C.pfx_mtl_discard_surface_texture(s.drawable)
+func (f *SurfaceFrame) Discard() {
+	C.pfx_mtl_discard_surface_texture(f.drawable)
 }
 
-func (s *SurfaceTexture) View() hal.TextureView {
+func (f *SurfaceFrame) View() hal.TextureView {
 	// TODO: ownership
 
 	return &TextureView{
-		texture: s.texture,
+		texture: f.texture,
 	}
 }
 
@@ -270,11 +270,11 @@ type CommandBuffer struct {
 	renderEncoder C.id
 }
 
-func (g *Graphics) CreateCommandBuffer() hal.CommandBuffer {
+func (f *SurfaceFrame) CreateCommandBuffer() hal.CommandBuffer {
 	var buf C.id
 
 	// TODO: synchronise
-	C.pfx_mtl_create_command_buf(g.queue, &buf)
+	C.pfx_mtl_create_command_buf(f.graphics.queue, &buf)
 
 	return &CommandBuffer{
 		buffer: buf,

@@ -17,10 +17,10 @@ const char* PFX_VK_LAYER_KHRONOS_validation = "VK_LAYER_KHRONOS_validation";
 const char* PFX_VK_KHR_portability_subset = "VK_KHR_portability_subset";
 const char* PFX_VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
 const char* PFX_VK_EXT_METAL_SURFACE_EXTENSION_NAME = VK_EXT_METAL_SURFACE_EXTENSION_NAME;
-const char* GFX_VK_KHR_SWAPCHAIN_EXTENSION_NAME = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-const char* GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME;
-const char* GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME;
-const char* GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME;
+const char* PFX_VK_KHR_SWAPCHAIN_EXTENSION_NAME = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+const char* PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME;
+const char* PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME;
+const char* PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME = VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME;
 
 VkBool32 pfx_vk_debug_callback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
@@ -51,6 +51,7 @@ type Graphics struct {
 	instance        C.VkInstance
 	debugMessenger  C.VkDebugUtilsMessengerEXT
 	physicalDevice  C.VkPhysicalDevice
+	graphicsFamily  int
 	device          C.VkDevice
 	graphicsQueue   C.VkQueue
 	memoryAllocator C.VmaAllocator
@@ -238,6 +239,7 @@ func (g *Graphics) createDevice(sel *selectedDevice) error {
 	defer pinner.Unpin()
 
 	g.physicalDevice = sel.device
+	g.graphicsFamily = sel.graphicsFamily
 
 	priority := C.float(1.0)
 
@@ -275,11 +277,11 @@ func (g *Graphics) createDevice(sel *selectedDevice) error {
 
 	// TODO: switch to vk1.3
 	exts = append(exts, C.PFX_VK_KHR_portability_subset)
-	exts = append(exts, C.GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME)
-	exts = append(exts, C.GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME)
-	exts = append(exts, C.GFX_VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME)
+	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME)
+	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME)
+	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME)
 	exts = append(exts, C.PFX_VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
-	exts = append(exts, C.GFX_VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+	exts = append(exts, C.PFX_VK_KHR_SWAPCHAIN_EXTENSION_NAME)
 
 	createInfo.enabledExtensionCount = C.uint32_t(len(exts))
 	createInfo.ppEnabledExtensionNames = unsafe.SliceData(exts)
@@ -503,9 +505,4 @@ func ToFormat(format hal.TextureFormat) C.VkFormat {
 	default:
 		panic("unknown format")
 	}
-}
-
-func (g *Graphics) CreateCommandBuffer() hal.CommandBuffer {
-	//TODO implement me
-	panic("implement me")
 }

@@ -3,7 +3,7 @@ package pfx
 import "github.com/obaraelijah/go-pfx/hal"
 
 func (f *Frame) NewCommandBuffer() *CommandBuffer {
-	buffer := f.app.graphics.CreateCommandBuffer()
+	buffer := f.frame.CreateCommandBuffer()
 
 	return &CommandBuffer{
 		buffer: buffer,
