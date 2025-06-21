@@ -46,6 +46,25 @@ VkResult pfx_vkQueueSubmit2KHR(
 	return PFX_VK_EXT_FUNC(vkQueueSubmit2KHR, queue, submitCount, pSubmits, fence);
 }
 
+
+void pfx_vkCmdSetViewportWithCountEXT(
+    VkInstance                                  instance,
+	VkCommandBuffer                             commandBuffer,
+    uint32_t                                    viewportCount,
+    const VkViewport*                           pViewports
+) {
+	PFX_VK_EXT_FUNC(vkCmdSetViewportWithCountEXT, commandBuffer, viewportCount, pViewports);
+}
+
+void pfx_vkCmdSetScissorWithCountEXT(
+    VkInstance                                  instance,
+	VkCommandBuffer                             commandBuffer,
+    uint32_t                                    scissorCount,
+    const VkRect2D*                             pScissors
+) {
+	PFX_VK_EXT_FUNC(vkCmdSetScissorWithCountEXT, commandBuffer, scissorCount, pScissors);
+}
+
 */
 import "C"
 
@@ -134,11 +153,33 @@ func (c *CommandBuffer) BeginRenderPass(description hal.RenderPassDescriptor) {
 	pinner.Pin(renderingInfo.pColorAttachments)
 
 	C.pfx_vkCmdBeginRenderingKHR(c.graphics.instance, c.commandBuffer, &renderingInfo)
+
+	var viewport C.VkViewport
+	viewport.x = C.float(0)
+	viewport.y = C.float(0)
+	viewport.width = C.float(c.frame.img.width)
+	viewport.height = C.float(c.frame.img.height)
+	viewport.minDepth = C.float(0)
+	viewport.maxDepth = C.float(1)
+
+	C.pfx_vkCmdSetViewportWithCountEXT(c.graphics.instance, c.commandBuffer, 1, &viewport)
+
+	var scissor C.VkRect2D
+	scissor.offset.x = 0
+	scissor.offset.y = 0
+	scissor.extent.width = C.uint32_t(c.frame.img.width)
+	scissor.extent.height = C.uint32_t(c.frame.img.height)
+
+	C.pfx_vkCmdSetScissorWithCountEXT(c.graphics.instance, c.commandBuffer, 1, &scissor)
 }
 
 func (c *CommandBuffer) SetRenderPipeline(pipeline hal.RenderPipeline) {
-	//TODO implement me
-	panic("implement me")
+	p, ok := pipeline.(*RenderPipeline)
+	if !ok {
+		panic("unexpected type")
+	}
+
+	C.vkCmdBindPipeline(c.commandBuffer, C.VK_PIPELINE_BIND_POINT_GRAPHICS, p.pipeline)
 }
 
 func (c *CommandBuffer) SetVertexBuffer(data hal.Buffer) {
@@ -147,8 +188,7 @@ func (c *CommandBuffer) SetVertexBuffer(data hal.Buffer) {
 }
 
 func (c *CommandBuffer) Draw(start int, count int) {
-	//TODO implement me
-	panic("implement me")
+	C.vkCmdDraw(c.commandBuffer, C.uint32_t(count), 1, C.uint32_t(start), 0)
 }
 
 func (c *CommandBuffer) EndRenderPass() {
