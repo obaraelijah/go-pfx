@@ -17,10 +17,12 @@ func (t *tmap[K, V]) Get(k K) (V, bool) {
 
 		return def, false
 	}
+
 	return v.(V), true
 }
 
 func (t *tmap[K, V]) Remove(k K) (V, bool) {
 	v, ok := t.m.LoadAndDelete(k)
+
 	return v.(V), ok
 }
