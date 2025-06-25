@@ -17333,7 +17333,7 @@ are going to use some intermediate textures or buffers only during a small range
 and you know these ranges don't overlap in time, you can bind these resources to
 the same place in memory, even if they have completely different parameters (width, height, format etc.).
 
-![Resource aliasing (overlap)](../gfx/Aliasing.png)
+![Resource aliasing (overlap)](../pfx/Aliasing.png)
 
 Such scenario is possible using VMA, but you need to create your images manually.
 Then you need to calculate parameters of an allocation to be made using formula:
@@ -17599,7 +17599,7 @@ keeps track of used and unused regions. By default, the metadata structure and
 algorithm tries to find best place for new allocations among free regions to
 optimize memory usage. This way you can allocate and free objects in any order.
 
-![Default allocation algorithm](../gfx/Linear_allocator_1_algo_default.png)
+![Default allocation algorithm](../pfx/Linear_allocator_1_algo_default.png)
 
 Sometimes there is a need to use simpler, linear allocation algorithm. You can
 create custom pool that uses such algorithm by adding flag
@@ -17609,7 +17609,7 @@ creates new allocations after last one and doesn't reuse free regions after
 allocations freed in the middle. It results in better allocation performance and
 less memory consumed by metadata.
 
-![Linear allocation algorithm](../gfx/Linear_allocator_2_algo_linear.png)
+![Linear allocation algorithm](../pfx/Linear_allocator_2_algo_linear.png)
 
 With this one flag, you can create a custom pool that can be used in many ways:
 free-at-once, stack, double stack, and ring buffer. See below for details.
@@ -17625,7 +17625,7 @@ the pool becomes empty, allocation starts from the beginning again. This way you
 can use linear algorithm to speed up creation of allocations that you are going
 to release all at once.
 
-![Free-at-once](../gfx/Linear_allocator_3_free_at_once.png)
+![Free-at-once](../pfx/Linear_allocator_3_free_at_once.png)
 
 This mode is also available for pools created with VmaPoolCreateInfo::maxBlockCount
 value that allows multiple memory blocks.
@@ -17636,7 +17636,7 @@ When you free an allocation that was created last, its space can be reused.
 Thanks to this, if you always release allocations in the order opposite to their
 creation (LIFO - Last In First Out), you can achieve behavior of a stack.
 
-![Stack](../gfx/Linear_allocator_4_stack.png)
+![Stack](../pfx/Linear_allocator_4_stack.png)
 
 This mode is also available for pools created with VmaPoolCreateInfo::maxBlockCount
 value that allows multiple memory blocks.
@@ -17652,7 +17652,7 @@ stacks:
 To make allocation from the upper stack, add flag #VMA_ALLOCATION_CREATE_UPPER_ADDRESS_BIT
 to VmaAllocationCreateInfo::flags.
 
-![Double stack](../gfx/Linear_allocator_7_double_stack.png)
+![Double stack](../pfx/Linear_allocator_7_double_stack.png)
 
 Double stack is available only in pools with one memory block -
 VmaPoolCreateInfo::maxBlockCount must be 1. Otherwise behavior is undefined.
@@ -17669,7 +17669,7 @@ beginning and starts allocation there. Thanks to this, if you always release
 allocations in the same order as you created them (FIFO - First In First Out),
 you can achieve behavior of a ring buffer / queue.
 
-![Ring buffer](../gfx/Linear_allocator_5_ring_buffer.png)
+![Ring buffer](../pfx/Linear_allocator_5_ring_buffer.png)
 
 Ring buffer is available only in pools with one memory block -
 VmaPoolCreateInfo::maxBlockCount must be 1. Otherwise behavior is undefined.
@@ -18141,7 +18141,7 @@ It works also with dedicated allocations.
 By default, allocations are laid out in memory blocks next to each other if possible
 (considering required alignment, `bufferImageGranularity`, and `nonCoherentAtomSize`).
 
-![Allocations without margin](../gfx/Margins_1.png)
+![Allocations without margin](../pfx/Margins_1.png)
 
 Define macro `VMA_DEBUG_MARGIN` to some non-zero value (e.g. 16) to enforce specified
 number of bytes as a margin after every allocation.
@@ -18151,7 +18151,7 @@ number of bytes as a margin after every allocation.
 #include "vk_mem_alloc.h"
 \endcode
 
-![Allocations with margin](../gfx/Margins_2.png)
+![Allocations with margin](../pfx/Margins_2.png)
 
 If your bug goes away after enabling margins, it means it may be caused by memory
 being overwritten outside of allocation boundaries. It is not 100% certain though.
