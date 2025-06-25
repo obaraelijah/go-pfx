@@ -1,14 +1,10 @@
 package vulkan
 
 /*
-#cgo pkg-config: vulkan
-#cgo CXXFLAGS: -std=c++20
+#cgo CXXFLAGS: -std=c++20 -Iinclude
+#cgo CFLAGS: -Iinclude
 
-#include <stdlib.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan_metal.h>
 #include "vulkan.h"
-#include "vk_mem_alloc.h"
 
 const char* PFX_VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
 const char* PFX_VK_KHR_SURFACE_EXTENSION_NAME = VK_KHR_SURFACE_EXTENSION_NAME;
@@ -30,14 +26,6 @@ VkBool32 pfx_vk_debug_callback(
     void*                                            pUserData
 );
 
-VkResult pfx_vkCreateDebugUtilsMessengerEXT(
-    VkInstance                                  instance,
-    const VkDebugUtilsMessengerCreateInfoEXT*   pCreateInfo,
-    const VkAllocationCallbacks*                pAllocator,
-    VkDebugUtilsMessengerEXT*                   pMessenger
-) {
-	return PFX_VK_EXT_FUNC(vkCreateDebugUtilsMessengerEXT, instance, pCreateInfo, pAllocator, pMessenger);
-}
 */
 import "C"
 
@@ -83,6 +71,10 @@ func (g *Graphics) createInstance() error {
 	pinner := new(runtime.Pinner)
 	defer pinner.Unpin()
 
+	if err := mapError(C.volkInitialize()); err != nil {
+		return err
+	}
+
 	var instInfo C.VkInstanceCreateInfo
 	instInfo.sType = C.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO
 
@@ -126,9 +118,11 @@ func (g *Graphics) createInstance() error {
 	instInfo.ppEnabledLayerNames = unsafe.SliceData(layers)
 	pinner.Pin(instInfo.ppEnabledLayerNames)
 
-	if err := mapError(C.vkCreateInstance(&instInfo, nil, &g.instance)); err != nil {
+	if err := mapError(C.pfx_vkCreateInstance(&instInfo, nil, &g.instance)); err != nil {
 		return err
 	}
+
+	C.volkLoadInstance(g.instance)
 
 	var debugInfo C.VkDebugUtilsMessengerCreateInfoEXT
 	debugInfo.sType = C.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT
@@ -149,15 +143,15 @@ type selectedDevice struct {
 }
 
 func (g *Graphics) selectDevice() (*selectedDevice, error) {
-
 	var physicalDeviceCount C.uint32_t
-	if err := mapError(C.vkEnumeratePhysicalDevices(g.instance, &physicalDeviceCount, nil)); err != nil {
+
+	if err := mapError(C.pfx_vkEnumeratePhysicalDevices(g.instance, &physicalDeviceCount, nil)); err != nil {
 		return nil, err
 	}
 
 	physicalDevices := make([]C.VkPhysicalDevice, physicalDeviceCount)
 
-	if err := mapError(C.vkEnumeratePhysicalDevices(
+	if err := mapError(C.pfx_vkEnumeratePhysicalDevices(
 		g.instance,
 		&physicalDeviceCount,
 		unsafe.SliceData(physicalDevices)),
@@ -173,7 +167,7 @@ func (g *Graphics) selectDevice() (*selectedDevice, error) {
 
 	for _, device := range physicalDevices {
 		var props C.VkPhysicalDeviceProperties
-		C.vkGetPhysicalDeviceProperties(device, &props)
+		C.pfx_vkGetPhysicalDeviceProperties(device, &props)
 
 		// TODO: check if device can present
 
@@ -195,11 +189,11 @@ func (g *Graphics) selectDevice() (*selectedDevice, error) {
 		}
 
 		var queueFamilyCount C.uint32_t
-		C.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nil)
+		C.pfx_vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nil)
 
 		queueFamilies := make([]C.VkQueueFamilyProperties, queueFamilyCount)
 
-		C.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, unsafe.SliceData(queueFamilies))
+		C.pfx_vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, unsafe.SliceData(queueFamilies))
 
 		queueFamilies = queueFamilies[:queueFamilyCount]
 
@@ -267,9 +261,9 @@ func (g *Graphics) createDevice(sel *selectedDevice) error {
 	pinner.Pin(extendedDynamicState3.pNext)
 
 	var dynamicRenderingFeatures C.VkPhysicalDeviceDynamicRenderingFeatures
+	dynamicRenderingFeatures.sType = C.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES
 	dynamicRenderingFeatures.pNext = unsafe.Pointer(&extendedDynamicState3)
 	pinner.Pin(dynamicRenderingFeatures.pNext)
-	dynamicRenderingFeatures.sType = C.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES
 	dynamicRenderingFeatures.dynamicRendering = C.VkBool32(1)
 
 	var createInfo C.VkDeviceCreateInfo
@@ -282,22 +276,25 @@ func (g *Graphics) createDevice(sel *selectedDevice) error {
 
 	var exts []*C.char
 
-	// TODO: switch to vk1.3
 	exts = append(exts, C.PFX_VK_KHR_portability_subset)
+
+	// TODO: switch to vk1.3
+	exts = append(exts, C.PFX_VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
 	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME)
 	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME)
 	exts = append(exts, C.PFX_VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME)
-	exts = append(exts, C.PFX_VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
+	exts = append(exts, C.PFX_VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME)
 	exts = append(exts, C.PFX_VK_KHR_SWAPCHAIN_EXTENSION_NAME)
 
 	createInfo.enabledExtensionCount = C.uint32_t(len(exts))
 	createInfo.ppEnabledExtensionNames = unsafe.SliceData(exts)
 	pinner.Pin(createInfo.ppEnabledExtensionNames)
-	if err := mapError(C.vkCreateDevice(sel.device, &createInfo, nil, &g.device)); err != nil {
+
+	if err := mapError(C.pfx_vkCreateDevice(sel.device, &createInfo, nil, &g.device)); err != nil {
 		return err
 	}
 
-	C.vkGetDeviceQueue(g.device, C.uint32_t(sel.graphicsFamily), 0, &g.graphicsQueue)
+	C.pfx_vkGetDeviceQueue(g.device, C.uint32_t(sel.graphicsFamily), 0, &g.graphicsQueue)
 
 	var vmaInfo C.VmaAllocatorCreateInfo
 	vmaInfo.vulkanApiVersion = C.VK_API_VERSION_1_3
@@ -317,6 +314,7 @@ type Shader struct {
 }
 
 func (g *Graphics) CreateShader(cfg hal.ShaderConfig) (hal.Shader, error) {
+
 	var createInfo C.VkShaderModuleCreateInfo
 	createInfo.sType = C.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO
 	createInfo.codeSize = C.size_t(len(cfg.Code))
@@ -324,7 +322,7 @@ func (g *Graphics) CreateShader(cfg hal.ShaderConfig) (hal.Shader, error) {
 
 	var shaderModule C.VkShaderModule
 
-	if err := mapError(C.vkCreateShaderModule(g.device, &createInfo, nil, &shaderModule)); err != nil {
+	if err := mapError(C.pfx_vkCreateShaderModule(g.device, &createInfo, nil, &shaderModule)); err != nil {
 		return nil, err
 	}
 
@@ -360,7 +358,7 @@ func (g *Graphics) CreateRenderPipeline(des hal.RenderPipelineDescriptor) (hal.R
 
 	var pipelineLayout C.VkPipelineLayout
 
-	if err := mapError(C.vkCreatePipelineLayout(g.device, &pipelineLayoutInfo, nil, &pipelineLayout)); err != nil {
+	if err := mapError(C.pfx_vkCreatePipelineLayout(g.device, &pipelineLayoutInfo, nil, &pipelineLayout)); err != nil {
 		return nil, err
 	}
 
@@ -496,7 +494,7 @@ func (g *Graphics) CreateRenderPipeline(des hal.RenderPipelineDescriptor) (hal.R
 
 	var pipeline C.VkPipeline
 
-	if err := mapError(C.vkCreateGraphicsPipelines(g.device, nil, 1, &pipelineInfo, nil, &pipeline)); err != nil {
+	if err := mapError(C.pfx_vkCreateGraphicsPipelines(g.device, nil, 1, &pipelineInfo, nil, &pipeline)); err != nil {
 		return nil, err
 	}
 

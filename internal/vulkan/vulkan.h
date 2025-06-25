@@ -1,12 +1,33 @@
-#ifndef GO_PFX_VULKAN_H
-#define GO_PFX_VULKAN_H
+#ifndef VULKAN_H_
+#define VULKAN_H_
+
+#include <stdlib.h>
+#include <stdint.h>
+
+#define VK_NO_PROTOTYPES 1
+#define VMA_NULLABLE
+#define VMA_NOT_NULL
+#define VMA_STATIC_VULKAN_FUNCTIONS 1
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
+
+#include "vulkan/vk_platform.h"
+#include "vulkan/vulkan_core.h"
+#include "vulkan/vulkan_metal.h"
+#include "volk.h"
+#include "vk_mem_alloc.h"
+#include "map.h"
 
 #include <stdint.h>
 
 uint32_t pfx_vk_version(int a, int b, int c);
 
-#define PFX_VK_EXT_FUNC2(ID, ...) PFN_ ## ID func = (PFN_ ## ID)(vkGetInstanceProcAddr(instance, #ID)); func(__VA_ARGS__)
+#define PFX_PARAMS(type,var) type var
+#define PFX_PARAMS_PAIR(pair) PFX_PARAMS pair
+#define PFX_PARAM_NAMES(type,var) var
+#define PFX_PARAM_NAMES_PAIR(pair) PFX_PARAM_NAMES pair
 
-#define PFX_VK_EXT_FUNC(ID, ...) ((PFN_ ## ID)(vkGetInstanceProcAddr(instance, #ID)))(__VA_ARGS__)
+#define PFX_FUNC(RES, NAME, ...) RES (Pfx_ ## NAME) ( MAP_LIST(PFX_PARAMS_PAIR, __VA_ARGS__) );
 
-#endif //GO_PFX_VULKAN_H
+#include "vulkan_funcs.h"
+
+#endif //VULKAN_H_
