@@ -7,6 +7,10 @@ import (
 	"github.com/obaraelijah/go-pfx/internal/windows"
 )
 
-func DefaultPlatform() hal.Platform {
+func WindowsPlatformEnabled() bool {
+	return true
+}
+
+func WindowsPlatform() hal.Platform {
 	return windows.NewPlatform()
 }
