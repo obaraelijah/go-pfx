@@ -18,6 +18,10 @@ var (
 	windows       sync.Map
 )
 
+func (p *Platform) WindowType() hal.WindowHandleType {
+	return hal.MetalWindowHandleType
+}
+
 func (p *Platform) NewWindow(cfg hal.WindowConfig) (hal.Window, hal.WindowHandle, error) {
 	var (
 		res   C.id

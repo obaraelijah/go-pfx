@@ -2,6 +2,7 @@ package pfx
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/obaraelijah/go-pfx/hal"
 )
@@ -17,6 +18,28 @@ type Application struct {
 	windows  tmap[hal.Window, *Window]
 }
 
+func DefaultPlatform() hal.Platform {
+	switch runtime.GOOS {
+	case "darwin":
+		return AppKitPlatform()
+	case "windows":
+		return WindowsPlatform()
+	default:
+		panic("unsupported platform")
+	}
+}
+
+func DefaultGraphics() hal.Graphics {
+	switch runtime.GOOS {
+	case "darwin":
+		return MetalGraphics()
+	case "windows":
+		return VulkanGraphics()
+	default:
+		panic("unsupported platform")
+	}
+}
+
 func Run(cfg ApplicationConfig) error {
 	return RunWith(cfg, DefaultPlatform(), DefaultGraphics())
 }
@@ -28,7 +51,9 @@ func RunWith(cfg ApplicationConfig, platform hal.Platform, graphics hal.Graphics
 		cfg:      cfg,
 	}
 
-	if err := app.graphics.Init(hal.GPUConfig{}); err != nil {
+	if err := app.graphics.Init(hal.GPUConfig{
+		WindowType: platform.WindowType(),
+	}); err != nil {
 		return fmt.Errorf("failed to init graphics: %w", err)
 	}
 
