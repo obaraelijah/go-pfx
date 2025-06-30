@@ -17,7 +17,7 @@
 #define PFX_SEE_ERROR (-10)
 #define PFX_SUCCESS 1
 
-int pfx_windows_init();
+int pfx_windows_init(HMODULE* inst);
 
 void pfx_windows_init_callback();
 
@@ -25,7 +25,8 @@ int pfx_windows_new_window(
         uint64_t wid,
         LPCWSTR title,
         int width,
-        int height
+        int height,
+        HWND* res
 );
 
 #endif //PFX_WINDOWS_H

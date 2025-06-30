@@ -18,6 +18,7 @@ var (
 )
 
 type Platform struct {
+	instance C.HMODULE
 }
 
 func NewPlatform() hal.Platform {
@@ -31,7 +32,7 @@ func (p *Platform) Run(cfg hal.PlatformConfig) error {
 
 	halCfg = cfg
 
-	res := C.pfx_windows_init()
+	res := C.pfx_windows_init(&p.instance)
 
 	switch res {
 	case C.PFX_SUCCESS:
@@ -43,8 +44,6 @@ func (p *Platform) Run(cfg hal.PlatformConfig) error {
 	default:
 		panic("unexpected result")
 	}
-
-	return nil
 }
 
 //export pfx_windows_init_callback
