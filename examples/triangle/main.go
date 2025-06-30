@@ -73,7 +73,7 @@ func (e *Example) init(app *pfx.Application) error {
 		return err
 	}
 
-	e.trianglePipeline, err = e.app.NewRenderPipeline(pfx.RenderPipelineDescriptor{Add commentMore actions
+	e.trianglePipeline, err = e.app.NewRenderPipeline(pfx.RenderPipelineDescriptor{
 		VertexFunction:   e.vertexFunction,
 		FragmentFunction: e.fragmentFunction,
 		ColorAttachments: []pfx.RenderPipelineColorAttachment{
@@ -125,26 +125,21 @@ func (e *Example) render(frame *pfx.Frame) {
 		count = 0
 	}
 
-	buf := frame.NewCommandBuffer()
-
-	rp := buf.BeginRenderPass(pfx.RenderPassDescriptor{
+	frame.QueueRenderPass(pfx.RenderPassDescriptor{
 		ColorAttachments: []pfx.RenderPassColorAttachment{
 			{
 				Target:     frame,
 				Load:       false,
-				ClearColor: pfx.NewColor(0, 0, 0, 1),
+				ClearColor: pfx.NewColor(1, 0, 0, 1),
 				Discard:    false,
 			},
 		},
+		Body: func(enc *pfx.RenderPassEncoder) {
+			enc.SetPipeline(e.trianglePipeline)
+			//enc.SetVertexBuffer(e.vertData)
+			enc.Draw(0, 3)
+		},
 	})
-
-	rp.SetPipeline(e.trianglePipeline)
-	rp.SetVertexBuffer(e.vertData)
-	rp.Draw(0, 3)
-
-	rp.End()
-
-	buf.Submit()
 
 	if err := frame.Present(); err != nil {
 		panic(err)
